@@ -21,6 +21,10 @@ const client = new Client({
 client.connect()
 
 const app = express()
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    next();
+});
 
 app.get('/matches', async (req, res) => {
 	const query = `
@@ -31,7 +35,7 @@ app.get('/matches', async (req, res) => {
 		      match.team1 = T1.team_id AND 
 		      match.team2 = T2.team_id AND 
 		      match.match_winner = T3.team_id 
-		ORDER BY season_year DESC 
+		ORDER BY season_year DESC, match_id DESC 
 		LIMIT $1 OFFSET $2
 	`
 	try {

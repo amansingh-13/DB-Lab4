@@ -1,0 +1,11 @@
+<div *ngIf="match_id; then thenBlock else elseBlock"></div>
+<ng-template #thenBlock>
+    match_id 
+</ng-template>
+<ng-template #elseBlock>
+    <div *ngFor="let match of matches">
+        <a href="/matches/{{match.match_id}}">
+            {{match.team1}} vs {{match.team2}} at {{match.venue_name}}, {{match.city_name}} | {{match.match_winner}} won by {{match.win_margin}} {{match.win_type}}
+        </a>
+    </div>
+</ng-template>
