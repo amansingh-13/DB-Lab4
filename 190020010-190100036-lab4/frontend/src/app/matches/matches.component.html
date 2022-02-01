@@ -1,11 +1,195 @@
 <div *ngIf="match_id; then thenBlock else elseBlock"></div>
 <ng-template #thenBlock>
-    match_id 
+    <mat-card style="text-align: center; margin-left: 10%; margin-right: 10%;"><b>{{i1_team}} Innings</b></mat-card>
+    <table mat-table [dataSource]="match_data.bat1.concat({custom:'Extras', runs:match_data.agg1.extras}, {custom:'Total', runs:match_data.agg1.total_runs+' ('+match_data.agg1.total_wickets+' wkts)'})"
+    style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <ng-container matColumnDef="1"><th mat-header-cell *matHeaderCellDef> Batter </th><td mat-cell *matCellDef="let e">
+            <a *ngIf="e.batter" href="/players/{{e.player_id}}">{{e.batter}}</a>
+            <a *ngIf="!e.batter"><b>{{e.custom}}</b></a>
+        </td></ng-container>
+        <ng-container matColumnDef="2"><th mat-header-cell *matHeaderCellDef> Runs </th><td mat-cell *matCellDef="let e"> 
+            {{e.runs}}
+        </td></ng-container>
+        <ng-container matColumnDef="3"><th mat-header-cell *matHeaderCellDef> Fours </th><td mat-cell *matCellDef="let e">
+            {{e.fours}}
+        </td></ng-container>
+        <ng-container matColumnDef="4"><th mat-header-cell *matHeaderCellDef> Sixes </th><td mat-cell *matCellDef="let e">
+            {{e.sixes}}
+        </td></ng-container>
+        <ng-container matColumnDef="5"><th mat-header-cell *matHeaderCellDef> Balls faced </th><td mat-cell *matCellDef="let e">
+            {{e.balls_faced}}
+        </td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="['1','2','3','4','5']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['1','2','3','4','5'];"></tr>
+    </table>
+    <table mat-table [dataSource]="match_data.bowl1" style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <ng-container matColumnDef="1"><th mat-header-cell *matHeaderCellDef> Bowler </th><td mat-cell *matCellDef="let e">
+            <a href="/players/{{e.player_id}}">{{e.bowler}}</a>
+        </td></ng-container>
+        <ng-container matColumnDef="2"><th mat-header-cell *matHeaderCellDef> Balls bowled </th><td mat-cell *matCellDef="let e">
+            {{e.balls_bowled}}
+        </td></ng-container>
+        <ng-container matColumnDef="3"><th mat-header-cell *matHeaderCellDef> Runs given </th><td mat-cell *matCellDef="let e">
+            {{e.runs_given}}
+        </td></ng-container>
+        <ng-container matColumnDef="4"><th mat-header-cell *matHeaderCellDef> Wickets </th><td mat-cell *matCellDef="let e">
+            {{e.wickets}}
+        </td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="['1','2','3','4']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['1','2','3','4'];"></tr>
+    </table>
+
+    <mat-card style="text-align: center; margin-left: 10%; margin-right: 10%;"><b>{{i2_team}} Innings</b></mat-card>
+    <table mat-table [dataSource]="match_data.bat2.concat({custom:'Extras', runs:match_data.agg2.extras}, {custom:'Total', runs:match_data.agg2.total_runs+' ('+match_data.agg2.total_wickets+' wkts)'})"
+    style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <ng-container matColumnDef="1"><th mat-header-cell *matHeaderCellDef> Batter </th><td mat-cell *matCellDef="let e">
+            <a *ngIf="e.batter" href="/players/{{e.player_id}}">{{e.batter}}</a>
+            <a *ngIf="!e.batter"><b>{{e.custom}}</b></a>
+        </td></ng-container>
+        <ng-container matColumnDef="2"><th mat-header-cell *matHeaderCellDef> Runs </th><td mat-cell *matCellDef="let e"> 
+            {{e.runs}}
+        </td></ng-container>
+        <ng-container matColumnDef="3"><th mat-header-cell *matHeaderCellDef> Fours </th><td mat-cell *matCellDef="let e">
+            {{e.fours}}
+        </td></ng-container>
+        <ng-container matColumnDef="4"><th mat-header-cell *matHeaderCellDef> Sixes </th><td mat-cell *matCellDef="let e">
+            {{e.sixes}}
+        </td></ng-container>
+        <ng-container matColumnDef="5"><th mat-header-cell *matHeaderCellDef> Balls faced </th><td mat-cell *matCellDef="let e">
+            {{e.balls_faced}}
+        </td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="['1','2','3','4','5']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['1','2','3','4','5'];"></tr>
+    </table>
+    <table mat-table [dataSource]="match_data.bowl2" style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <ng-container matColumnDef="1"><th mat-header-cell *matHeaderCellDef> Bowler </th><td mat-cell *matCellDef="let e">
+            <a href="/players/{{e.player_id}}">{{e.bowler}}</a>
+        </td></ng-container>
+        <ng-container matColumnDef="2"><th mat-header-cell *matHeaderCellDef> Balls bowled </th><td mat-cell *matCellDef="let e">
+            {{e.balls_bowled}}
+        </td></ng-container>
+        <ng-container matColumnDef="3"><th mat-header-cell *matHeaderCellDef> Runs given </th><td mat-cell *matCellDef="let e">
+            {{e.runs_given}}
+        </td></ng-container>
+        <ng-container matColumnDef="4"><th mat-header-cell *matHeaderCellDef> Wickets </th><td mat-cell *matCellDef="let e">
+            {{e.wickets}}
+        </td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="['1','2','3','4']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['1','2','3','4'];"></tr>
+    </table>
+
+    <mat-card style="text-align: center; margin-left: 10%; margin-right: 10%;"><b>Match Info</b></mat-card>
+    <table class="mat-table" style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Match</b></td>
+            <td class="mat-cell">#{{match_data.info.match_id}} IPL {{match_data.info.season_year}}, {{match_data.info.team1}} vs {{match_data.info.team2}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Toss</b></td>
+            <td class="mat-cell">{{match_data.info.toss_winner}} won the toss and decided to {{match_data.info.toss_name}} first</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Venue</b></td>
+            <td class="mat-cell">{{match_data.info.venue_name}}, {{match_data.info.city_name}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Umpires</b></td>
+            <td class="mat-cell">{{csv_umpires}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>{{match_data.info.team1}} playing XI</b></td>
+            <td class="mat-cell">{{csv_team1_players}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>{{match_data.info.team2}} playing XI</b></td>
+            <td class="mat-cell">{{csv_team2_players}}</td>
+        </tr>
+    </table>
+
+    <div style="text-align: center; width: 100%; padding-bottom: 1em;">
+        <mat-button-toggle-group [(ngModel)]="option" style="text-align: center;">
+            <mat-button-toggle value="score" ngDefaultControl><b>Score Comparision</b></mat-button-toggle>
+            <mat-button-toggle value="summary" ngDefaultControl><b>Match Summary</b></mat-button-toggle>
+        </mat-button-toggle-group>
+    </div>
+
+    <canvas id="total" [style.display]="option == 'score'?'block':'none'"></canvas>
+    
+    <table class="mat-table" style="width: 100%; padding-right: 20%; padding-left: 20%;"
+    [style.display]="option == 'summary'?'':'none'">
+        <tr class="mat-row">
+            <td class="mat-cell">#{{match_data.info.match_id}} IPL {{match_data.info.season_year}}</td>
+            <td class="mat-cell"></td><td class="mat-cell"></td><td class="mat-cell"></td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>{{i1_team | uppercase}}</b> <a *ngIf="i1_team == match_data.info.toss_winner"> (TOSS) </a></td>
+            <td class="mat-cell"></td>
+            <td class="mat-cell"><b>{{match_data.agg1.overs_bowled}} OVERS</b></td>
+            <td class="mat-cell"><b>{{match_data.agg1.total_runs}}-{{match_data.agg1.total_wickets}}</b></td>
+        </tr>
+        <tr class="mat-row" *ngFor="let i of [0,1,2]">
+            <td class="mat-cell" *ngIf="i < match_data.bat1.length">
+                <a href="/players/{{match_data.bat1[i].player_id}}">{{match_data.bat1[i].batter}}</a>
+            </td>
+            <td class="mat-cell" *ngIf="i < match_data.bat1.length">
+                <b>{{match_data.bat1[i].runs}}</b> {{match_data.bat1[i].balls_faced}}
+            </td>
+            <td class="mat-cell" *ngIf="i < match_data.bowl1.length && match_data.bowl1[i].wickets != 0">
+                <a href="/players/{{match_data.bowl1[i].player_id}}">{{match_data.bowl1[i].bowler}}</a>
+            </td>
+            <td class="mat-cell" *ngIf="i < match_data.bowl1.length && match_data.bowl1[i].wickets != 0">
+                <b>{{match_data.bowl1[i].wickets}}-{{match_data.bowl1[i].runs_given}}</b> {{match_data.bowl1[i].overs_bowled}}
+            </td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>{{i2_team | uppercase}}</b> <a *ngIf="i2_team == match_data.info.toss_winner"> (TOSS) </a></td>
+            <td class="mat-cell"></td>
+            <td class="mat-cell"><b>{{match_data.agg2.overs_bowled}} OVERS</b></td>
+            <td class="mat-cell"><b>{{match_data.agg2.total_runs}}-{{match_data.agg2.total_wickets}}</b></td>
+        </tr>
+        <tr class="mat-row" *ngFor="let i of [0,1,2]">
+            <td class="mat-cell" *ngIf="i < match_data.bat2.length">
+                <a href="/players/{{match_data.bat2[i].player_id}}">{{match_data.bat2[i].batter}}</a>
+            </td>
+            <td class="mat-cell" *ngIf="i < match_data.bat2.length">
+                <b>{{match_data.bat2[i].runs}}</b> {{match_data.bat2[i].balls_faced}}
+            </td>
+            <td class="mat-cell" *ngIf="i < match_data.bowl2.length && match_data.bowl2[i].wickets != 0">
+                <a href="/players/{{match_data.bowl2[i].player_id}}">{{match_data.bowl2[i].bowler}}</a>
+            </td>
+            <td class="mat-cell" *ngIf="i < match_data.bowl2.length && match_data.bowl2[i].wickets != 0">
+                <b>{{match_data.bowl2[i].wickets}}-{{match_data.bowl2[i].runs_given}}</b> {{match_data.bowl2[i].overs_bowled}}
+            </td>
+        </tr>
+    </table>
+    <div style="margin-right: 20%; margin-left: 20%; text-align: center; margin-bottom: 1em; border-bottom: 1px solid lightgray; padding: 10px"
+    [style.display]="option == 'summary'?'block':'none'">
+        <b>{{match_data.info.match_winner}} won by {{match_data.info.win_margin}} {{match_data.info.win_type}}</b>
+    </div>
+
+    <div style="margin-right: 15%; margin-left: 15%; text-align: center;">
+        <div style="display:inline-block" [style.display]="option == 'summary'?'':'none'">
+            <canvas id="pie1"></canvas>
+        </div>
+        <div style="display:inline-block" [style.display]="option == 'summary'?'':'none'">
+            <canvas id="pie2"></canvas>
+        </div>
+    </div>
 </ng-template>
 <ng-template #elseBlock>
-    <div *ngFor="let match of matches">
-        <a href="/matches/{{match.match_id}}">
-            {{match.team1}} vs {{match.team2}} at {{match.venue_name}}, {{match.city_name}} | {{match.match_winner}} won by {{match.win_margin}} {{match.win_type}}
+    <div *ngFor="let match of match_data">
+        <a style="text-decoration: none;" href="/matches/{{match.match_id}}">
+            <button mat-button style="width: fit-content; margin-left: 10%; margin-right: 10%; text-align: left;">
+                {{match.team1}} vs {{match.team2}} <b>|</b>
+                {{match.venue_name}}, {{match.city_name}} <b>|</b>
+                {{match.match_winner}} won by {{match.win_margin}} {{match.win_type}}
+            </button>
         </a>
+    </div>
+    <div style="text-align: center;">
+        <button mat-button *ngIf="params.skip >= 10" (click)="navigate(-10)" style="border: 1px grey solid; margin: 1em;">
+            Previous
+        </button>
+        <button mat-button (click)="navigate(10)" style="border: 1px grey solid; margin: 1em;"> Next </button>
     </div>
 </ng-template>

@@ -67,7 +67,8 @@ app.get('/matches/:match_id', async (req, res) => {
 		       SUM(runs_scored)::int AS runs_given, 
 		       COUNT(*) FILTER (WHERE out_type IS NOT NULL AND
 		                              out_type <> 'run out' AND
-		                              out_type <> 'retired hurt')::int AS wickets
+		                              out_type <> 'retired hurt')::int AS wickets,
+		       COUNT(DISTINCT over_id)::int AS overs_bowled
 		FROM ball_by_ball, player
 		WHERE bowler = player_id AND
 		      match_id = $1 AND
@@ -78,7 +79,7 @@ app.get('/matches/:match_id', async (req, res) => {
 	const info_query = `
 		SELECT match_id, T1.team_name AS team1, T2.team_name AS team2,
 		       season_year, T3.team_name AS toss_winner, toss_name, venue_name,
-		       T4.team_name AS match_winner, win_type, win_margin
+		       T4.team_name AS match_winner, win_type, win_margin, city_name
 		FROM match, team AS T1, team AS T2, team AS T3, team AS T4, venue
 		WHERE match_id = $1 AND 
 		      match.venue_id = venue.venue_id AND 
@@ -89,26 +90,31 @@ app.get('/matches/:match_id', async (req, res) => {
 	`
 
 	const total_query = `
-		SELECT over_id, ball_id, 
-		       (SELECT SUM(runs_scored)::int+SUM(extra_runs)::int FROM ball_by_ball AS b2
-		        WHERE match_id = $1 AND innings_no = $2 AND (
-			b2.over_id < b1.over_id OR (
-			b2.over_id = b1.over_id AND b2.ball_id <= b1.ball_id))) AS total 
-		FROM ball_by_ball AS b1 
+		SELECT DISTINCT over_id, (SELECT SUM(runs_scored)::int+SUM(extra_runs)::int 
+			   FROM ball_by_ball AS b2 
+			   WHERE match_id = $1 AND innings_no = $2 AND b2.over_id <= b1.over_id)
+		       AS total
+		FROM ball_by_ball AS b1
 		WHERE match_id = $1 AND innings_no = $2
+		ORDER BY over_id ASC
 	`
 	const wicket_query = `
-		SELECT over_id FROM ball_by_ball 
-		WHERE match_id = $1 AND innings_no = $2 AND out_type IS NOT NULL
+		SELECT over_id, 
+		       (CASE WHEN COUNT(out_type) = 0 THEN 0 ELSE 1 END)::int AS out
+		FROM ball_by_ball WHERE match_id = $1 AND innings_no = $2 
+		GROUP BY over_id ORDER BY over_id ASC
 	`
 
-	const pie_query = `
+	const agg_query = `
 		SELECT SUM(runs_scored) FILTER (WHERE runs_scored = 1)::int AS ones,
 		       SUM(runs_scored) FILTER (WHERE runs_scored = 2)::int  AS twos,
 		       SUM(runs_scored) FILTER (WHERE runs_scored = 3)::int  AS threes,
 		       SUM(runs_scored) FILTER (WHERE runs_scored = 4)::int  AS fours,
 		       SUM(runs_scored) FILTER (WHERE runs_scored = 6)::int  AS sixes,
-		       SUM(extra_runs)::int AS extras
+		       SUM(extra_runs)::int AS extras,
+			   SUM(runs_scored)::int+SUM(extra_runs)::int AS total_runs,
+			   COUNT(out_type)::int AS total_wickets,
+			   COUNT(DISTINCT over_id)::int AS overs_bowled
 		FROM ball_by_ball WHERE match_id = $1 AND innings_no = $2
 	`
 
@@ -134,8 +140,8 @@ app.get('/matches/:match_id', async (req, res) => {
 		const total2 = await client.query(total_query, [req.params.match_id, 2])
 		const wicket2 = await client.query(wicket_query, [req.params.match_id, 2])
 		
-		const pie1 = await client.query(pie_query, [req.params.match_id, 1])
-		const pie2 = await client.query(pie_query, [req.params.match_id, 2])
+		const pie1 = await client.query(agg_query, [req.params.match_id, 1])
+		const pie2 = await client.query(agg_query, [req.params.match_id, 2])
 
 		res.json({
 			'bat1': bat1.rows, 'bowl1': bowl1.rows,
@@ -147,7 +153,7 @@ app.get('/matches/:match_id', async (req, res) => {
 			'total1': total1.rows, 'wicket1': wicket1.rows,
 			'total2': total2.rows, 'wicket2': wicket2.rows,
 
-			'pie1': pie1.rows[0], 'pie2': pie2.rows[0]
+			'agg1': pie1.rows[0], 'agg2': pie2.rows[0]
 		})
 	}
 	catch(e) { console.log(e); res.json({"error":"ERR in /matches/:match_id"}) }
