@@ -162,38 +162,119 @@ app.get('/matches/:match_id', async (req, res) => {
 })
 
 
-app.get('/matches/:match_id', async (req, res) => {
+app.get('/player/:player_id', async (req, res) => {
 
 	try {
+		const id = req.params.player_id
+
+		const player_name = await client.query(`SELECT player_name from player where player_id = $1`, [id])
+		const country = await client.query(`SELECT country_name from player where player_id = $1`, [id])
+		const batting_style = await client.query(`SELECT batting_style from player where player_id = $1`, [id])
+		const bowling_skill = await client.query(`SELECT bowling_skill from player where player_id = $1`, [id])
+
+		const batsman_matches = await client.query(`SELECT count(distinct match_id) from ball_by_ball where striker = $1 or non_striker = $1`, [id])
+		const batsman_runs = await client.query(`SELECT sum(runs_scored) from ball_by_ball where striker = $1`, [id])
+		const fours = await client.query(`SELECT count(runs_scored) from ball_by_ball where striker = $1 and runs_scored=4`, [id])
+		const sixes = await client.query(`SELECT count(runs_scored) from ball_by_ball where striker = $1 and runs_scored=6`, [id])
+		const fifties = await client.query(
+			`WITH A as 
+			(SELECT match_id,sum(runs_scored) as runs 
+			from ball_by_ball 
+			where striker = $1 
+			group by match_id) 
+			SELECT count(runs) from A where runs>=50 and runs<100`,
+			[id])
+
+		const max = await client.query(
+			`WITH A as 
+			(SELECT match_id,sum(runs_scored) as runs 
+			from ball_by_ball 
+			where striker = $1 
+			group by match_id) 
+			SELECT max(runs) from A`,
+			[id])
+
+		const strike_rate = await client.query(
+			`SELECT sum(runs_scored)*1.0/count(runs_scored) as strike_rate 
+			from ball_by_ball 
+			where striker=$1`,
+			[id])
+
+		const avg = await client.query(
+			`SELECT sum(runs_scored)*1.0/count(out_type) as average 
+			from ball_by_ball 
+			where striker=$1`,
+			[id])
+
+		const batting_stats_graph_info
+			= await client.query(
+				`SELECT match_id,sum(runs_scored) 
+			from ball_by_ball 
+			where striker = $1 
+			group by match_id 
+			order by match_id`,
+				[id])
+
+		const bowler_matches = await client.query(`SELECT count(distinct match_id) from ball_by_ball where bowler = $1`, [id])
+		const bowler_runs = await client.query(`SELECT sum(runs_scored) from ball_by_ball where bowler = $1`, [id])
+		const bowler_balls = await client.query(`SELECT count(runs_scored) from ball_by_ball where bowler = $1`, [id])
+		const overs = await client.query(`SELECT count(distinct over_id) from ball_by_ball where bowler = $1`, [id])
+		const economy = await client.query(`SELECT sum(runs_scored)*1.0/count(distinct over_id) from ball_by_ball where bowler = $1`, [id])
+
+
+
+
+		const wkts = await client.query(
+			`SELECT sum(out_type) from ball_by_ball where bowler=$1`,
+			[id])
+
+		const five_wkts = await client.query(
+			`with A as 
+			(select match_id, bowler, count(out_type) as wkts 
+			from ball_by_ball 
+			group by match_id, bowler) 
+			select count(match_id) 
+			from A 
+			where wkts>=5 and bowler=$1;`,
+			[id])
+
+		const bowler_graph = await client.query(
+			`select count(out_type) as wkts, 
+			sum(runs_scored)+sum(extra_runs) as runs 
+			from ball_by_ball 
+			where bowler=$1 
+			group by match_id;`,
+			[id])
+
 		res.json({
 			'basic_info': {
-				'player_name': null,
-				'country': null,
-				'batting_style': null,
-				'bowling_skill': null
+				'player_name': player_name.rows,
+				'country': country.rows,
+				'batting_style': batting_style.rows,
+				'bowling_skill': bowling_skill.rows
 			},
 
 			'batting_stats': {
-				'matches': null,
-				'runs': null,
-				'fours': null,
-				'sixes': null,
-				'fifties': null,
-				'max_score': null,
-				'strike_rate': null,
-				'average': null,
-				'graph_info': null
+				'matches': batsman_matches.rows,
+				'runs': batsman_runs.rows,
+				'fours': fours.rows,
+				'sixes': sixes.rows,
+				'fifties': fifties.rows,
+				'max': max.rows,
+				'strike_rate': strike_rate.rows,
+				'average': avg.rows,
+				'graph_info': batting_stats_graph_info.rows
 			},
 
 			'bowling_stats': {
-				'matches': null,
-				'runs': null,
-				'balls': null,
-				'overs': null,
-				'wickets': null,
-				'economy': null,
-				'five_wkts': null,
-				'graph_info': null
+				'matches': bowler_matches.rows,
+				'runs': bowler_runs.rows,
+				'balls': bowler_balls.rows,
+				'overs': overs.rows,
+				'wickets': wkts.rows,
+				'economy': economy.rows,
+				'five_wkts': five_wkts.rows,
+				'graph_info': bowler_graph.rows
 			}
 		})
 	}
