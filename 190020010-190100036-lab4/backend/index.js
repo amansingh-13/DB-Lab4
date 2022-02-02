@@ -3,12 +3,12 @@ const { Client } = require('pg')
 const { ArgumentParser } = require('argparse')
 
 const parser = new ArgumentParser()
-parser.add_argument('--name', {'type':'str'})
-parser.add_argument('--user', {'type':'str'})
-parser.add_argument('--pswd', {'type':'str'})
-parser.add_argument('--host', {'type':'str', 'default':'localhost'})
-parser.add_argument('--pgport', {'type':'int', 'default':5432})
-parser.add_argument('--node', {'type':'int', 'default':5000})
+parser.add_argument('--name', { 'type': 'str' })
+parser.add_argument('--user', { 'type': 'str' })
+parser.add_argument('--pswd', { 'type': 'str' })
+parser.add_argument('--host', { 'type': 'str', 'default': 'localhost' })
+parser.add_argument('--pgport', { 'type': 'int', 'default': 5432 })
+parser.add_argument('--node', { 'type': 'int', 'default': 5000 })
 const args = parser.parse_args()
 
 const client = new Client({
@@ -21,9 +21,10 @@ const client = new Client({
 client.connect()
 
 const app = express()
+
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    next();
+	res.header("Access-Control-Allow-Origin", "*");
+	next();
 });
 
 app.get('/matches', async (req, res) => {
@@ -42,7 +43,7 @@ app.get('/matches', async (req, res) => {
 		const resp = await client.query(query, [req.query.limit, req.query.skip])
 		res.json(resp.rows)
 	}
-	catch (e) { console.log(e); res.json({"error":"ERR in /matches"}) }
+	catch (e) { console.log(e); res.json({ "error": "ERR in /matches" }) }
 })
 
 app.get('/matches/:match_id', async (req, res) => {
@@ -134,12 +135,12 @@ app.get('/matches/:match_id', async (req, res) => {
 		const team2 = await client.query(
 			`SELECT player_name FROM player_match NATURAL JOIN player NATURAL JOIN match 
 			WHERE match_id = $1 AND team_id = team2`, [req.params.match_id])
-		
+
 		const total1 = await client.query(total_query, [req.params.match_id, 1])
 		const wicket1 = await client.query(wicket_query, [req.params.match_id, 1])
 		const total2 = await client.query(total_query, [req.params.match_id, 2])
 		const wicket2 = await client.query(wicket_query, [req.params.match_id, 2])
-		
+
 		const pie1 = await client.query(agg_query, [req.params.match_id, 1])
 		const pie2 = await client.query(agg_query, [req.params.match_id, 2])
 
@@ -156,8 +157,47 @@ app.get('/matches/:match_id', async (req, res) => {
 			'agg1': pie1.rows[0], 'agg2': pie2.rows[0]
 		})
 	}
-	catch(e) { console.log(e); res.json({"error":"ERR in /matches/:match_id"}) }
+	catch (e) { console.log(e); res.json({ "error": "ERR in /matches/:match_id" }) }
 
+})
+
+
+app.get('/matches/:match_id', async (req, res) => {
+
+	try {
+		res.json({
+			'basic_info': {
+				'player_name': null,
+				'country': null,
+				'batting_style': null,
+				'bowling_skill': null
+			},
+
+			'batting_stats': {
+				'matches': null,
+				'runs': null,
+				'fours': null,
+				'sixes': null,
+				'fifties': null,
+				'max_score': null,
+				'strike_rate': null,
+				'average': null,
+				'graph_info': null
+			},
+
+			'bowling_stats': {
+				'matches': null,
+				'runs': null,
+				'balls': null,
+				'overs': null,
+				'wickets': null,
+				'economy': null,
+				'five_wkts': null,
+				'graph_info': null
+			}
+		})
+	}
+	catch (e) { console.log(e); res.json({ "error": "ERR in /player/:player_id" }) }
 })
 
 app.listen(args.node, () => {
