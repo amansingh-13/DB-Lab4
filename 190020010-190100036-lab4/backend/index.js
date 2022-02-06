@@ -75,7 +75,7 @@ app.get('/matches/:match_id', async (req, res) => {
 		      match_id = $1 AND
 		      innings_no = $2
 		GROUP BY player_id, player_name
-		ORDER BY wickets DESC, balls_bowled ASC, player_name ASC
+		ORDER BY wickets DESC, runs_given ASC, player_name ASC
 	`
 	const info_query = `
 		SELECT match_id, T1.team_name AS team1, T2.team_name AS team2,
@@ -279,6 +279,86 @@ app.get('/player/:player_id', async (req, res) => {
 		})
 	}
 	catch (e) { console.log(e); res.json({ "error": "ERR in /player/:player_id" }) }
+})
+
+app.get('/pointstable/:year', async (req, res) => {
+	const tquery = `
+		WITH ro AS (SELECT * FROM
+		    (SELECT match_id, 
+			    SUM(runs_scored)+SUM(extra_runs) AS r1, MAX(over_id) AS o1
+		    FROM ball_by_ball WHERE innings_no=1 GROUP BY match_id) AS x
+		    NATURAL JOIN                                                            
+		    (SELECT match_id,
+			    SUM(runs_scored)+SUM(extra_runs) AS r2, MAX(over_id) AS o2
+		    FROM ball_by_ball WHERE innings_no=2 GROUP BY match_id) AS y),
+		choice AS 
+		    (SELECT team_id, match_id,
+			    CASE WHEN match_winner=team_id THEN 1 ELSE 0 END AS won,
+			    CASE WHEN (toss_winner=team_id AND toss_name='bat') OR
+				      (toss_winner<>team_id AND toss_name='field') 
+			    THEN 1 ELSE 2 END AS inn
+		    FROM team, match
+		    WHERE (team_id=team1 OR team_id=team2) AND season_year = $1)
+		SELECT team_name, COUNT(*)::int as mat, SUM(won)::int as won,
+		       COUNT(*)::int-SUM(won)::int as lost, 0 AS tied,
+		       2*SUM(won)::int AS pts,                                                                        
+		       1.0*SUM(CASE WHEN inn=1 THEN r1 ELSE r2 END)/SUM(CASE WHEN inn=1 THEN o1 ELSE o2 END) -
+		       1.0*SUM(CASE WHEN inn=1 THEN r2 ELSE r1 END)/SUM(CASE WHEN inn=1 THEN o2 ELSE o1 END) AS nr
+		FROM ro, choice, team 
+		WHERE  team.team_id=choice.team_id AND ro.match_id=choice.match_id   
+		GROUP BY team.team_id, team_name
+		ORDER BY pts DESC, nr DESC, mat ASC
+	`
+	try {
+		const table = await client.query(tquery, [req.params.year])
+		res.json(table.rows)
+	}
+	catch (e) { console.log(e); res.json({ "error": "ERR in /pointstable/:year" }) }
+})
+
+app.get('/venues', async (req, res) => {
+	try {
+		const venues = await client.query(`SELECT venue_id, venue_name FROM venue`)
+		res.json(venues.rows)
+	}
+	catch (e) { console.log(e); res.json({ "error": "ERR in /venues" }) }
+})
+
+app.get('/venue/:venue_id', async (req, res) => {
+	try {
+		const info_query = `
+			WITH agg AS 
+			(SELECT venue.venue_id, match.match_id, innings_no, win_type, 
+			       SUM(runs_scored)::int+SUM(extra_runs)::int AS total
+			FROM venue, match, ball_by_ball
+			WHERE venue.venue_id = match.venue_id AND 
+			      match.match_id = ball_by_ball.match_id
+			GROUP BY venue.venue_id, match.match_id, innings_no, win_type)
+			SELECT venue_name, city_name, capacity,
+			       COUNT(DISTINCT match_id)::int AS matches,
+			       MAX(total)::int AS max, MIN(total)::int AS min,
+			       MAX(total+1) FILTER (WHERE win_type='wickets' AND innings_no=1)
+			       AS max_chased
+			FROM agg NATURAL JOIN venue 
+			WHERE venue_id = $1
+			GROUP BY venue_id, venue_name, city_name, capacity
+		`
+		const info = await client.query(info_query, [req.params.venue_id])
+		const win = await client.query(`
+			SELECT COUNT(*) FILTER (WHERE win_type='runs')::int AS first,
+			       COUNT(*) FILTER (WHERE win_type='wickets')::int AS second
+			FROM match WHERE venue_id = $1 GROUP BY venue_id`, [req.params.venue_id])
+		const avg = await client.query(`
+			SELECT season_year, 
+			       1.0*(SUM(runs_scored)+SUM(extra_runs))/COUNT(DISTINCT match_id)
+			       AS avg
+			FROM match NATURAL JOIN ball_by_ball
+			WHERE innings_no = 1 AND venue_id = $1 AND
+			      season_year IN (2011, 2013, 2015, 2017)
+			GROUP BY season_year ORDER BY season_year`, [req.params.venue_id])
+		res.json({'info': info.rows[0], 'win': win.rows[0], 'avg': avg.rows})
+	}
+	catch (e) { console.log(e); res.json({ "error": "ERR in /venue/:venue_id" }) }
 })
 
 app.listen(args.node, () => {

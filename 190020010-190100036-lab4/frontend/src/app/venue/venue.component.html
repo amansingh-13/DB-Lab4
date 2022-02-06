@@ -1,0 +1,49 @@
+<div *ngIf="venue_id; then thenBlock else elseBlock"></div>
+<ng-template #thenBlock> 
+    <mat-card style="text-align: center; margin-left: 20%; margin-right: 20%;"><b>Venue Info</b></mat-card>
+    <table class="mat-table" style="width: 100%; padding-right: 20%; padding-left: 20%; padding-bottom: 1em;">
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Venue Name</b></td>
+            <td class="mat-cell">{{venue_data.info.venue_name}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Address</b></td>
+            <td class="mat-cell">{{venue_data.info.city_name}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Capacity</b></td>
+            <td class="mat-cell">{{venue_data.info.capacity}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total matches played</b></td>
+            <td class="mat-cell">{{venue_data.info.matches}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Highest total recorded</b></td>
+            <td class="mat-cell">{{venue_data.info.max}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Lowest total recorded</b></td>
+            <td class="mat-cell">{{venue_data.info.min}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Highest total chased</b></td>
+            <td class="mat-cell">{{venue_data.info.max_chased}}</td>
+        </tr>
+    </table>
+    <div style="text-align: center; margin-left: 35%; margin-right: 35%; margin-bottom: 2em;">
+        <canvas id="win_dist" style="text-align: center;"></canvas>
+    </div>
+    <div style="text-align: center; margin-left: 20%; margin-right: 20%;">
+        <canvas id="avg_graph" style="text-align: center;"></canvas>
+    </div>
+</ng-template>
+<ng-template #elseBlock>
+    <div *ngFor="let venue of venue_data">
+        <a style="text-decoration: none;" href="/venue/{{venue.venue_id}}">
+            <button mat-button style="width: fit-content; margin-left: 10%; margin-right: 10%; text-align: left;">
+                {{venue.venue_name}}
+            </button>
+        </a>
+    </div>
+</ng-template>

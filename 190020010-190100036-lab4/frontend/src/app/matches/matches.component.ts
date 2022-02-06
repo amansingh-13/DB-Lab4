@@ -101,6 +101,22 @@ export class MatchesComponent implements OnInit, AfterViewInit {
             pointRadius: [0, ...this.match_data.wicket2.map((x:any) => 5*x.out)]
           }]
         },
+        options: {
+          scales: {
+            y: {
+              title: {
+                display: true,
+                text: 'Runs'
+              },
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Over'
+              },
+            }
+          }
+        }
       })
     }
   }
