@@ -162,23 +162,24 @@ app.get('/matches/:match_id', async (req, res) => {
 })
 
 
-app.get('/player/:player_id', async (req, res) => {
+app.get('/players/:player_id', async (req, res) => {
 
 	try {
 		const id = req.params.player_id
 
 		const player_name = await client.query(`SELECT player_name from player where player_id = $1`, [id])
 		const country = await client.query(`SELECT country_name from player where player_id = $1`, [id])
-		const batting_style = await client.query(`SELECT batting_style from player where player_id = $1`, [id])
+		const batting_style = await client.query(`SELECT batting_hand from player where player_id = $1`, [id])
 		const bowling_skill = await client.query(`SELECT bowling_skill from player where player_id = $1`, [id])
 
-		const batsman_matches = await client.query(`SELECT count(distinct match_id) from ball_by_ball where striker = $1 or non_striker = $1`, [id])
-		const batsman_runs = await client.query(`SELECT sum(runs_scored) from ball_by_ball where striker = $1`, [id])
-		const fours = await client.query(`SELECT count(runs_scored) from ball_by_ball where striker = $1 and runs_scored=4`, [id])
-		const sixes = await client.query(`SELECT count(runs_scored) from ball_by_ball where striker = $1 and runs_scored=6`, [id])
+
+		const batsman_matches = await client.query(`SELECT count(distinct match_id)::int from ball_by_ball where striker = $1 or non_striker = $1`, [id])
+		const batsman_runs = await client.query(`SELECT sum(runs_scored)::int from ball_by_ball where striker = $1`, [id])
+		const fours = await client.query(`SELECT count(runs_scored)::int from ball_by_ball where striker = $1 and runs_scored=4`, [id])
+		const sixes = await client.query(`SELECT count(runs_scored)::int from ball_by_ball where striker = $1 and runs_scored=6`, [id])
 		const fifties = await client.query(
 			`WITH A as 
-			(SELECT match_id,sum(runs_scored) as runs 
+			(SELECT match_id,sum(runs_scored)::int as runs 
 			from ball_by_ball 
 			where striker = $1 
 			group by match_id) 
@@ -187,7 +188,7 @@ app.get('/player/:player_id', async (req, res) => {
 
 		const max = await client.query(
 			`WITH A as 
-			(SELECT match_id,sum(runs_scored) as runs 
+			(SELECT match_id,sum(runs_scored)::int as runs 
 			from ball_by_ball 
 			where striker = $1 
 			group by match_id) 
@@ -195,52 +196,55 @@ app.get('/player/:player_id', async (req, res) => {
 			[id])
 
 		const strike_rate = await client.query(
-			`SELECT sum(runs_scored)*1.0/count(runs_scored) as strike_rate 
+			`SELECT ROUND((sum(runs_scored)::int)*100.0/(count(runs_scored)::int), 2) as strike_rate 
 			from ball_by_ball 
 			where striker=$1`,
 			[id])
 
 		const avg = await client.query(
-			`SELECT sum(runs_scored)*1.0/count(out_type) as average 
+			`SELECT ROUND((sum(runs_scored))*1.0/(count(out_type)), 2) as average 
 			from ball_by_ball 
 			where striker=$1`,
 			[id])
 
 		const batting_stats_graph_info
 			= await client.query(
-				`SELECT match_id,sum(runs_scored) 
+			`SELECT match_id,sum(runs_scored)::int 
 			from ball_by_ball 
 			where striker = $1 
 			group by match_id 
 			order by match_id`,
 				[id])
 
-		const bowler_matches = await client.query(`SELECT count(distinct match_id) from ball_by_ball where bowler = $1`, [id])
-		const bowler_runs = await client.query(`SELECT sum(runs_scored) from ball_by_ball where bowler = $1`, [id])
-		const bowler_balls = await client.query(`SELECT count(runs_scored) from ball_by_ball where bowler = $1`, [id])
-		const overs = await client.query(`SELECT count(distinct over_id) from ball_by_ball where bowler = $1`, [id])
-		const economy = await client.query(`SELECT sum(runs_scored)*1.0/count(distinct over_id) from ball_by_ball where bowler = $1`, [id])
-
-
-
+		const bowler_matches = await client.query(`SELECT count(distinct match_id)::int from ball_by_ball where bowler = $1`, [id])
+		const bowler_runs = await client.query(`SELECT sum(runs_scored)::int+sum(extra_runs)::int as runs from ball_by_ball where bowler = $1`, [id])
+		const bowler_balls = await client.query(`SELECT count(runs_scored)::int from ball_by_ball where bowler = $1`, [id])
+		const overs = await client.query(`SELECT count(distinct over_id)::int from ball_by_ball where bowler = $1`, [id])
+		const economy 
+			= await client.query(
+				`SELECT 
+				ROUND((sum(runs_scored)::int)*1.0/(count(distinct over_id)::int), 2) as economy
+				from ball_by_ball 
+				where bowler = $1`, 
+				[id])
 
 		const wkts = await client.query(
-			`SELECT sum(out_type) from ball_by_ball where bowler=$1`,
+			`SELECT count(out_type)::int from ball_by_ball where bowler=$1`,
 			[id])
 
 		const five_wkts = await client.query(
 			`with A as 
-			(select match_id, bowler, count(out_type) as wkts 
+			(select match_id, bowler, count(out_type)::int as wkts 
 			from ball_by_ball 
 			group by match_id, bowler) 
-			select count(match_id) 
+			select count(match_id)::int 
 			from A 
 			where wkts>=5 and bowler=$1;`,
 			[id])
 
 		const bowler_graph = await client.query(
-			`select count(out_type) as wkts, 
-			sum(runs_scored)+sum(extra_runs) as runs 
+			`select count(out_type)::int as wkts, 
+			sum(runs_scored)::int+sum(extra_runs)::int as runs 
 			from ball_by_ball 
 			where bowler=$1 
 			group by match_id;`,
@@ -251,9 +255,9 @@ app.get('/player/:player_id', async (req, res) => {
 				'player_name': player_name.rows,
 				'country': country.rows,
 				'batting_style': batting_style.rows,
-				'bowling_skill': bowling_skill.rows
+				'bowling_skill': bowling_skill.rows,
 			},
-
+			
 			'batting_stats': {
 				'matches': batsman_matches.rows,
 				'runs': batsman_runs.rows,
@@ -278,7 +282,7 @@ app.get('/player/:player_id', async (req, res) => {
 			}
 		})
 	}
-	catch (e) { console.log(e); res.json({ "error": "ERR in /player/:player_id" }) }
+	catch (e) { console.log(e); res.json({ "error": "ERR in /players/:player_id" }) }
 })
 
 app.get('/pointstable/:year', async (req, res) => {

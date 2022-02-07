@@ -1,0 +1,85 @@
+
+    <mat-card style="text-align: left; margin-left: 10%; margin-right: 10%;"><b>Basic Information</b></mat-card>
+    <table class="mat-table" style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Player Name</b></td>
+            <td class="mat-cell">{{info.player_name[0].player_name}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Country</b></td>
+            <td class="mat-cell">{{info.country[0].country_name}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Batting Style</b></td>
+            <td class="mat-cell">{{info.batting_style[0].batting_hand}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Bowling Skill</b></td>
+            <td class="mat-cell">{{info.bowling_skill[0].bowling_skill}}</td>
+        </tr>
+    </table>
+
+
+    <mat-card style="text-align: left; margin-left: 10%; margin-right: 10%;"><b>Batting Statistics</b></mat-card>
+    <table class="mat-table" style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total matches played as batsman</b></td>
+            <td class="mat-cell">{{bat.matches[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Average</b></td>
+            <td class="mat-cell">{{bat.average[0].average}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Fifties</b></td>
+            <td class="mat-cell">{{bat.fifties[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Fours</b></td>
+            <td class="mat-cell">{{bat.fours[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Sixes</b></td>
+            <td class="mat-cell">{{bat.sixes[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Strike Rate</b></td>
+            <td class="mat-cell">{{bat.strike_rate[0].strike_rate}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total Runs</b></td>
+            <td class="mat-cell">{{bat.runs[0].sum}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Maximum Score</b></td>
+            <td class="mat-cell">{{bat.max[0].max}}</td>
+        </tr>
+    </table>
+
+    <mat-card style="text-align: left; margin-left: 10%; margin-right: 10%;"><b>Bowling Statistics</b></mat-card>
+    <table class="mat-table" style="width: 100%; padding-right: 10%; padding-left: 10%; padding-bottom: 1em;">
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total matches played as bowler</b></td>
+            <td class="mat-cell">{{bowl.matches[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total overs bowled</b></td>
+            <td class="mat-cell">{{bowl.overs[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Five Wicket Hauls</b></td>
+            <td class="mat-cell">{{bowl.five_wkts[0].count}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Economy</b></td>
+            <td class="mat-cell">{{bowl.economy[0].economy}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total runs conceded</b></td>
+            <td class="mat-cell">{{bowl.runs[0].runs}}</td>
+        </tr>
+        <tr class="mat-row">
+            <td class="mat-cell"><b>Total wickets taken</b></td>
+            <td class="mat-cell">{{bowl.wickets[0].count}}</td>
+        </tr>
+    </table>    
