@@ -372,9 +372,33 @@ app.get('/venue/:venue_id', async (req, res) => {
 
 
 app.post('/venues/add', (req, res) => {
+
+	const insert_query = `insert into venue(venue_name,city_name,country_name,capacity) values ($1, $2, $3, $4)`
+
 	try{
-		console.log(req.body)
-		res.status('200').send({'ok':true})
+		const name = req.body.name
+		const country = req.body.country
+		const city = req.body.city
+		const capacity = Number(req.body.capacity)
+		
+		client.query(insert_query, [name, city, country, capacity], (err, result1) => {
+			if (err) {
+				client.query('ROLLBACK')
+				res.status('400').send()
+			  	console.log(err.stack)
+			} else {
+				client.query('COMMIT' , (err, result2) => {
+					if(err){
+						client.query('ROLLBACK')
+						res.status('400').send()
+			  			console.log(err.stack)
+					}
+					else{
+						res.status('200').send({'ok':true})
+					}
+				})
+			}
+		  })
 	}
 	catch(e) {	console.log(e); res.json({ "error": "ERR in /venues/add" }) }
 })
