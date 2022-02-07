@@ -138,8 +138,16 @@ export class PlayerComponent implements OnInit, AfterViewInit  {
           label : "less than 30 runs",
           data : this.batStatY,
           backgroundColor: this.batStatZ
-        }]
+        }],
       },
+      options: {
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+      
     })
 
   }
