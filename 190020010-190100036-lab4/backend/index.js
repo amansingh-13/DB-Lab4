@@ -22,6 +22,10 @@ client.connect()
 
 const app = express()
 
+const cors = require('cors');
+
+app.use(cors());
+
 app.use((req, res, next) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	next();
@@ -364,6 +368,17 @@ app.get('/venue/:venue_id', async (req, res) => {
 	}
 	catch (e) { console.log(e); res.json({ "error": "ERR in /venue/:venue_id" }) }
 })
+
+
+app.post('/venues/add', (req, res) => {
+	try{
+		//requiredData = req.body
+		//console.log(requiredData)
+		res.send('hello')
+	}
+	catch(e) {	console.log(e); res.json({ "error": "ERR in /venues/add" }) }
+})
+
 
 app.listen(args.node, () => {
 	console.log(`Server started at http://${args.host}:${args.node}/`)

@@ -9,12 +9,13 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatTableModule } from '@angular/material/table'
 import { MatCardModule } from '@angular/material/card'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'; 
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { PointstableComponent } from './pointstable/pointstable.component';
 import { VenueComponent } from './venue/venue.component';
 import { PlayerComponent } from './player/player.component'; 
 import { NgApexchartsModule } from "ng-apexcharts";
+import { NewvenueComponent } from './newvenue/newvenue.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { NgApexchartsModule } from "ng-apexcharts";
     MatchesComponent,
     PointstableComponent,
     VenueComponent,
-    PlayerComponent
+    PlayerComponent,
+    NewvenueComponent,
   ],
   imports: [
     HttpClientModule,
@@ -33,6 +35,7 @@ import { NgApexchartsModule } from "ng-apexcharts";
     MatCardModule,
     MatButtonToggleModule,
     FormsModule,
+    ReactiveFormsModule,
     MatButtonModule,
     NgApexchartsModule
   ],

@@ -12,5 +12,10 @@ export class RequestsService {
     return this.http.get<JSON>(this.BASE+url)
   }
 
+  public post(url:string, body: any){
+    console.log(body)
+    return this.http.post(this.BASE+url, body)
+  }
+
   constructor(private http: HttpClient) { }
 }
