@@ -132,7 +132,7 @@ export class PlayerComponent implements OnInit, AfterViewInit {
       data: {
         labels: this.batStatX,
         datasets: [{
-          label: "less than 30 runs",
+          label: "Runs",
           data: this.batStatY,
           backgroundColor: this.batStatZ
         }],
