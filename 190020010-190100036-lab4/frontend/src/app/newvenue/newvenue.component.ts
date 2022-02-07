@@ -30,13 +30,12 @@ export class NewvenueComponent implements OnInit {
       response => 
       { 
         alert("Form Submission Successful")
-        this.Form.reset() 
+        //this.Form.reset() 
       },
       error => 
       {
         console.log(error)
-        alert("Form Submission Not Successful!\
-        Check Again")
+        alert("Form Submission Not Successful!\nCheck Again")
       }
     )
   }

@@ -23,9 +23,10 @@ client.connect()
 const app = express()
 
 const cors = require('cors');
+const bodyParser = require('body-parser')
 
 app.use(cors());
-
+app.use(bodyParser.json())
 app.use((req, res, next) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	next();
@@ -372,9 +373,8 @@ app.get('/venue/:venue_id', async (req, res) => {
 
 app.post('/venues/add', (req, res) => {
 	try{
-		//requiredData = req.body
-		//console.log(requiredData)
-		res.send('hello')
+		console.log(req.body)
+		res.status('200').send({'ok':true})
 	}
 	catch(e) {	console.log(e); res.json({ "error": "ERR in /venues/add" }) }
 })
