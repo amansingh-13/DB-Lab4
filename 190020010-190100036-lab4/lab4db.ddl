@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.9 (Ubuntu 12.9-0ubuntu0.20.04.1)
--- Dumped by pg_dump version 12.9 (Ubuntu 12.9-0ubuntu0.20.04.1)
+-- Dumped from database version 10.19 (Ubuntu 10.19-0ubuntu0.18.04.1)
+-- Dumped by pg_dump version 10.19 (Ubuntu 10.19-0ubuntu0.18.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,112 +17,104 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: check_attendance(); Type: FUNCTION; Schema: public; Owner: aman
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
 --
 
-CREATE FUNCTION public.check_attendance() RETURNS trigger
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+--
+-- Name: trigger_match(); Type: FUNCTION; Schema: public; Owner: kk
+--
+
+CREATE FUNCTION public.trigger_match() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF (SELECT capacity FROM venue WHERE venue_id = NEW.venue_id) < NEW.attendance THEN
-	RAISE EXCEPTION 'attendance > capacity';
+    IF NEW.attendance >
+    (SELECT capacity 
+    FROM venue
+    WHERE venue.venue_id = NEW.venue_id)
+    THEN 
+        RAISE EXCEPTION 'Attendance must be less than venue capacity';
     END IF;
     RETURN NEW;
 END;
 $$;
 
 
-ALTER FUNCTION public.check_attendance() OWNER TO aman;
+ALTER FUNCTION public.trigger_match() OWNER TO kk;
 
 --
--- Name: check_stake(); Type: FUNCTION; Schema: public; Owner: aman
+-- Name: trigger_owner(); Type: FUNCTION; Schema: public; Owner: kk
 --
 
-CREATE FUNCTION public.check_stake() RETURNS trigger
+CREATE FUNCTION public.trigger_owner() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF (SELECT SUM(stake) FROM owner WHERE owner.team_id = NEW.team_id) + NEW.stake > 100 THEN
-        RAISE EXCEPTION 'total stake > 100';
+    IF 100 <
+    (SELECT sum(stake) 
+    FROM owner
+    WHERE owner.team_id = NEW.team_id)
+    THEN 
+        RAISE EXCEPTION 'The sum of stakes for a team should be less than or equal to 100';
     END IF;
     RETURN NEW;
 END;
 $$;
 
 
-ALTER FUNCTION public.check_stake() OWNER TO aman;
+ALTER FUNCTION public.trigger_owner() OWNER TO kk;
 
 --
--- Name: check_umpires(); Type: FUNCTION; Schema: public; Owner: aman
+-- Name: trigger_umpirematch(); Type: FUNCTION; Schema: public; Owner: kk
 --
 
-CREATE FUNCTION public.check_umpires() RETURNS trigger
+CREATE FUNCTION public.trigger_umpirematch() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF NEW.role_desc = 'Field' AND (SELECT COUNT(*) FROM umpire_match WHERE match_id = NEW.match_id AND role_desc = 'Field') >= 2
+    IF NEW.role_desc = 'Field'
     THEN
-	RAISE EXCEPTION 'field umpires > 2';
+        IF (SELECT count(*) 
+        FROM umpire_match 
+        WHERE umpire_match.role_desc = 'Field' and 
+        umpire_match.match_id = NEW.match_id) >= 2
+        THEN
+            RAISE EXCEPTION 'No more than 2 field umpires in a match';
+        END IF;
     END IF;
-    IF NEW.role_desc = 'Third' AND (SELECT COUNT(*) FROM umpire_match WHERE match_id = NEW.match_id AND role_desc = 'Third') >= 1 
+    IF NEW.role_desc = 'Third'
     THEN
-	RAISE EXCEPTION 'third umpires > 1';
+        IF (SELECT count(*) 
+        FROM umpire_match 
+        WHERE umpire_match.role_desc = 'Third' and 
+        umpire_match.match_id = NEW.match_id) >= 1
+        THEN
+            RAISE EXCEPTION 'No more than 1 third umpires in a match';
+        END IF;
     END IF;
     RETURN NEW;
 END;
 $$;
 
 
-ALTER FUNCTION public.check_umpires() OWNER TO aman;
-
---
--- Name: hmm(integer); Type: FUNCTION; Schema: public; Owner: aman
---
-
-CREATE FUNCTION public.hmm(x integer) RETURNS integer
-    LANGUAGE plpgsql
-    AS $$
-begin INSERT INTO venue VALUES (22,'hm','hm','hm',333);
-return x*x; end;
-$$;
-
-
-ALTER FUNCTION public.hmm(x integer) OWNER TO aman;
-
---
--- Name: hmmm(integer); Type: FUNCTION; Schema: public; Owner: aman
---
-
-CREATE FUNCTION public.hmmm(x integer) RETURNS integer
-    LANGUAGE plpgsql
-    AS $$
-begin INSERT INTO venue VALUES (23,'hm','hm','hm',333);
-return NULL; end;
-$$;
-
-
-ALTER FUNCTION public.hmmm(x integer) OWNER TO aman;
-
---
--- Name: lol(integer); Type: FUNCTION; Schema: public; Owner: aman
---
-
-CREATE FUNCTION public.lol(x integer) RETURNS integer
-    LANGUAGE plpgsql
-    AS $$
-begin INSERT INTO venue VALUES (22,"hm","hm","hm",333);
-return x*x; end;
-$$;
-
-
-ALTER FUNCTION public.lol(x integer) OWNER TO aman;
+ALTER FUNCTION public.trigger_umpirematch() OWNER TO kk;
 
 SET default_tablespace = '';
 
-SET default_table_access_method = heap;
+SET default_with_oids = false;
 
 --
--- Name: ball_by_ball; Type: TABLE; Schema: public; Owner: aman
+-- Name: ball_by_ball; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.ball_by_ball (
@@ -136,16 +128,16 @@ CREATE TABLE public.ball_by_ball (
     striker integer,
     non_striker integer,
     bowler integer,
-    CONSTRAINT ball_by_ball_innings_no_check CHECK (((innings_no IS NOT NULL) AND ((innings_no = 1) OR (innings_no = 2)))),
+    CONSTRAINT ball_by_ball_innings_no_check CHECK (((innings_no = 1) OR (innings_no = 2))),
     CONSTRAINT ball_by_ball_out_type_check CHECK (((out_type = 'caught'::text) OR (out_type = 'caught and bowled'::text) OR (out_type = 'bowled'::text) OR (out_type = 'stumped'::text) OR (out_type = 'retired hurt'::text) OR (out_type = 'keeper catch'::text) OR (out_type = 'lbw'::text) OR (out_type = 'run out'::text) OR (out_type = 'hit wicket'::text) OR (out_type IS NULL))),
-    CONSTRAINT ball_by_ball_runs_scored_check CHECK (((runs_scored IS NOT NULL) AND ((runs_scored >= 0) AND (runs_scored <= 6))))
+    CONSTRAINT ball_by_ball_runs_scored_check CHECK (((runs_scored >= 0) AND (runs_scored <= 6)))
 );
 
 
-ALTER TABLE public.ball_by_ball OWNER TO aman;
+ALTER TABLE public.ball_by_ball OWNER TO kk;
 
 --
--- Name: match; Type: TABLE; Schema: public; Owner: aman
+-- Name: match; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.match (
@@ -161,16 +153,15 @@ CREATE TABLE public.match (
     man_of_match integer,
     win_margin integer,
     attendance integer,
-    CONSTRAINT match_attendance_check CHECK ((attendance IS NOT NULL)),
-    CONSTRAINT match_toss_name_check CHECK (((toss_name IS NOT NULL) AND ((toss_name = 'field'::text) OR (toss_name = 'bat'::text)))),
+    CONSTRAINT match_toss_name_check CHECK (((toss_name = 'field'::text) OR (toss_name = 'bat'::text))),
     CONSTRAINT match_win_type_check CHECK (((win_type = 'wickets'::text) OR (win_type = 'runs'::text) OR (win_type IS NULL)))
 );
 
 
-ALTER TABLE public.match OWNER TO aman;
+ALTER TABLE public.match OWNER TO kk;
 
 --
--- Name: owner; Type: TABLE; Schema: public; Owner: aman
+-- Name: owner; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.owner (
@@ -179,14 +170,14 @@ CREATE TABLE public.owner (
     owner_type text,
     team_id integer,
     stake integer,
-    CONSTRAINT owner_stake_check CHECK (((stake IS NOT NULL) AND ((stake >= 1) AND (stake <= 100))))
+    CONSTRAINT owner_stake_check CHECK (((stake >= 1) AND (stake <= 100)))
 );
 
 
-ALTER TABLE public.owner OWNER TO aman;
+ALTER TABLE public.owner OWNER TO kk;
 
 --
--- Name: player; Type: TABLE; Schema: public; Owner: aman
+-- Name: player; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.player (
@@ -199,10 +190,10 @@ CREATE TABLE public.player (
 );
 
 
-ALTER TABLE public.player OWNER TO aman;
+ALTER TABLE public.player OWNER TO kk;
 
 --
--- Name: player_match; Type: TABLE; Schema: public; Owner: aman
+-- Name: player_match; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.player_match (
@@ -211,14 +202,28 @@ CREATE TABLE public.player_match (
     player_id integer,
     role_desc text,
     team_id integer,
-    CONSTRAINT player_match_role_desc_check CHECK (((role_desc IS NOT NULL) AND ((role_desc = 'Player'::text) OR (role_desc = 'Keeper'::text) OR (role_desc = 'CaptainKeeper'::text) OR (role_desc = 'Captain'::text))))
+    CONSTRAINT player_match_role_desc_check CHECK (((role_desc = 'Player'::text) OR (role_desc = 'Keeper'::text) OR (role_desc = 'CaptainKeeper'::text) OR (role_desc = 'Captain'::text)))
 );
 
 
-ALTER TABLE public.player_match OWNER TO aman;
+ALTER TABLE public.player_match OWNER TO kk;
 
 --
--- Name: team; Type: TABLE; Schema: public; Owner: aman
+-- Name: sq; Type: SEQUENCE; Schema: public; Owner: kk
+--
+
+CREATE SEQUENCE public.sq
+    START WITH 17
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.sq OWNER TO kk;
+
+--
+-- Name: team; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.team (
@@ -227,10 +232,10 @@ CREATE TABLE public.team (
 );
 
 
-ALTER TABLE public.team OWNER TO aman;
+ALTER TABLE public.team OWNER TO kk;
 
 --
--- Name: umpire; Type: TABLE; Schema: public; Owner: aman
+-- Name: umpire; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.umpire (
@@ -240,10 +245,10 @@ CREATE TABLE public.umpire (
 );
 
 
-ALTER TABLE public.umpire OWNER TO aman;
+ALTER TABLE public.umpire OWNER TO kk;
 
 --
--- Name: umpire_match; Type: TABLE; Schema: public; Owner: aman
+-- Name: umpire_match; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.umpire_match (
@@ -251,18 +256,18 @@ CREATE TABLE public.umpire_match (
     match_id integer,
     umpire_id integer,
     role_desc text,
-    CONSTRAINT umpire_match_role_desc_check CHECK (((role_desc IS NOT NULL) AND ((role_desc = 'Field'::text) OR (role_desc = 'Third'::text))))
+    CONSTRAINT umpire_match_role_desc_check CHECK (((role_desc = 'Field'::text) OR (role_desc = 'Third'::text)))
 );
 
 
-ALTER TABLE public.umpire_match OWNER TO aman;
+ALTER TABLE public.umpire_match OWNER TO kk;
 
 --
--- Name: venue; Type: TABLE; Schema: public; Owner: aman
+-- Name: venue; Type: TABLE; Schema: public; Owner: kk
 --
 
 CREATE TABLE public.venue (
-    venue_id integer NOT NULL,
+    venue_id integer DEFAULT nextval('public.sq'::regclass) NOT NULL,
     venue_name text,
     city_name text,
     country_name text,
@@ -270,10 +275,10 @@ CREATE TABLE public.venue (
 );
 
 
-ALTER TABLE public.venue OWNER TO aman;
+ALTER TABLE public.venue OWNER TO kk;
 
 --
--- Name: ball_by_ball ball_by_ball_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: ball_by_ball ball_by_ball_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.ball_by_ball
@@ -281,7 +286,7 @@ ALTER TABLE ONLY public.ball_by_ball
 
 
 --
--- Name: match match_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -289,7 +294,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: owner owner_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: owner owner_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.owner
@@ -297,7 +302,7 @@ ALTER TABLE ONLY public.owner
 
 
 --
--- Name: player_match player_match_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: player_match player_match_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.player_match
@@ -305,7 +310,7 @@ ALTER TABLE ONLY public.player_match
 
 
 --
--- Name: player player_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: player player_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.player
@@ -313,7 +318,7 @@ ALTER TABLE ONLY public.player
 
 
 --
--- Name: team team_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: team team_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.team
@@ -321,7 +326,7 @@ ALTER TABLE ONLY public.team
 
 
 --
--- Name: umpire_match umpire_match_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: umpire_match umpire_match_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.umpire_match
@@ -329,7 +334,7 @@ ALTER TABLE ONLY public.umpire_match
 
 
 --
--- Name: umpire umpire_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: umpire umpire_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.umpire
@@ -337,7 +342,7 @@ ALTER TABLE ONLY public.umpire
 
 
 --
--- Name: venue venue_pkey; Type: CONSTRAINT; Schema: public; Owner: aman
+-- Name: venue venue_pkey; Type: CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.venue
@@ -345,28 +350,28 @@ ALTER TABLE ONLY public.venue
 
 
 --
--- Name: match check_attendance_trigger; Type: TRIGGER; Schema: public; Owner: aman
+-- Name: match trigger_match; Type: TRIGGER; Schema: public; Owner: kk
 --
 
-CREATE TRIGGER check_attendance_trigger BEFORE INSERT OR UPDATE ON public.match FOR EACH ROW EXECUTE FUNCTION public.check_attendance();
-
-
---
--- Name: owner check_stake_trigger; Type: TRIGGER; Schema: public; Owner: aman
---
-
-CREATE TRIGGER check_stake_trigger BEFORE INSERT OR UPDATE ON public.owner FOR EACH ROW EXECUTE FUNCTION public.check_stake();
+CREATE TRIGGER trigger_match BEFORE INSERT OR UPDATE ON public.match FOR EACH ROW EXECUTE PROCEDURE public.trigger_match();
 
 
 --
--- Name: umpire_match check_umpires_trigger; Type: TRIGGER; Schema: public; Owner: aman
+-- Name: owner trigger_owner; Type: TRIGGER; Schema: public; Owner: kk
 --
 
-CREATE TRIGGER check_umpires_trigger BEFORE INSERT OR UPDATE ON public.umpire_match FOR EACH ROW EXECUTE FUNCTION public.check_umpires();
+CREATE TRIGGER trigger_owner BEFORE INSERT OR UPDATE ON public.owner FOR EACH ROW EXECUTE PROCEDURE public.trigger_owner();
 
 
 --
--- Name: ball_by_ball ball_by_ball_bowler_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: umpire_match trigger_umpirematch; Type: TRIGGER; Schema: public; Owner: kk
+--
+
+CREATE TRIGGER trigger_umpirematch BEFORE INSERT OR UPDATE ON public.umpire_match FOR EACH ROW EXECUTE PROCEDURE public.trigger_umpirematch();
+
+
+--
+-- Name: ball_by_ball ball_by_ball_bowler_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.ball_by_ball
@@ -374,7 +379,7 @@ ALTER TABLE ONLY public.ball_by_ball
 
 
 --
--- Name: ball_by_ball ball_by_ball_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: ball_by_ball ball_by_ball_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.ball_by_ball
@@ -382,7 +387,7 @@ ALTER TABLE ONLY public.ball_by_ball
 
 
 --
--- Name: ball_by_ball ball_by_ball_non_striker_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: ball_by_ball ball_by_ball_non_striker_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.ball_by_ball
@@ -390,7 +395,7 @@ ALTER TABLE ONLY public.ball_by_ball
 
 
 --
--- Name: ball_by_ball ball_by_ball_striker_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: ball_by_ball ball_by_ball_striker_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.ball_by_ball
@@ -398,7 +403,7 @@ ALTER TABLE ONLY public.ball_by_ball
 
 
 --
--- Name: match match_man_of_match_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_man_of_match_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -406,7 +411,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: match match_match_winner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_match_winner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -414,7 +419,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: match match_team1_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_team1_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -422,7 +427,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: match match_team2_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_team2_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -430,7 +435,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: match match_toss_winner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_toss_winner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -438,7 +443,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: match match_venue_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: match match_venue_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.match
@@ -446,7 +451,7 @@ ALTER TABLE ONLY public.match
 
 
 --
--- Name: owner owner_team_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: owner owner_team_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.owner
@@ -454,7 +459,7 @@ ALTER TABLE ONLY public.owner
 
 
 --
--- Name: player_match player_match_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: player_match player_match_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.player_match
@@ -462,7 +467,7 @@ ALTER TABLE ONLY public.player_match
 
 
 --
--- Name: player_match player_match_player_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: player_match player_match_player_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.player_match
@@ -470,7 +475,7 @@ ALTER TABLE ONLY public.player_match
 
 
 --
--- Name: player_match player_match_team_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: player_match player_match_team_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.player_match
@@ -478,7 +483,7 @@ ALTER TABLE ONLY public.player_match
 
 
 --
--- Name: umpire_match umpire_match_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: umpire_match umpire_match_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.umpire_match
@@ -486,7 +491,7 @@ ALTER TABLE ONLY public.umpire_match
 
 
 --
--- Name: umpire_match umpire_match_umpire_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aman
+-- Name: umpire_match umpire_match_umpire_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: kk
 --
 
 ALTER TABLE ONLY public.umpire_match
