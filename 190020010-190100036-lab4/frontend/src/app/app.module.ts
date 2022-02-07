@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { PointstableComponent } from './pointstable/pointstable.component';
 import { VenueComponent } from './venue/venue.component';
 import { PlayerComponent } from './player/player.component'; 
+import { NgApexchartsModule } from "ng-apexcharts";
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { PlayerComponent } from './player/player.component';
     MatCardModule,
     MatButtonToggleModule,
     FormsModule,
-    MatButtonModule
+    MatButtonModule,
+    NgApexchartsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

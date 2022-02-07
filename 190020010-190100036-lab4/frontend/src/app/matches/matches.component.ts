@@ -85,7 +85,7 @@ export class MatchesComponent implements OnInit, AfterViewInit {
       let ctx:any = document.getElementById('total')
       new Chart(ctx.getContext('2d'), {
         type: 'line',
-        data: {
+        data: {           
           labels: [...Array(21).keys()],
           datasets: [{
             data: [0, ...this.match_data.total1.map((x:any) => x.total)],

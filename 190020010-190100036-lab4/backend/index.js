@@ -244,7 +244,7 @@ app.get('/players/:player_id', async (req, res) => {
 
 		const bowler_graph = await client.query(
 			`select count(out_type)::int as wkts, 
-			sum(runs_scored)::int+sum(extra_runs)::int as runs 
+			sum(runs_scored)::int+sum(extra_runs)::int as runs, match_id 
 			from ball_by_ball 
 			where bowler=$1 
 			group by match_id;`,
