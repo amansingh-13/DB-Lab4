@@ -335,6 +335,11 @@ app.get('/venues', async (req, res) => {
 
 app.get('/venue/:venue_id', async (req, res) => {
 	try {
+		const some_query = `
+		SELECT venue_name, city_name, country_name, capacity
+		FROM venue
+		WHERE venue.venue_id = $1
+		`
 		const info_query = `
 			WITH agg AS 
 			(SELECT venue.venue_id, match.match_id, innings_no, win_type, 
@@ -343,15 +348,17 @@ app.get('/venue/:venue_id', async (req, res) => {
 			WHERE venue.venue_id = match.venue_id AND 
 			      match.match_id = ball_by_ball.match_id
 			GROUP BY venue.venue_id, match.match_id, innings_no, win_type)
-			SELECT venue_name, city_name, capacity,
+			SELECT venue_name, city_name, country_name, capacity,
 			       COUNT(DISTINCT match_id)::int AS matches,
 			       MAX(total)::int AS max, MIN(total)::int AS min,
 			       MAX(total+1) FILTER (WHERE win_type='wickets' AND innings_no=1)
 			       AS max_chased
 			FROM agg NATURAL JOIN venue 
 			WHERE venue_id = $1
-			GROUP BY venue_id, venue_name, city_name, capacity
+			GROUP BY venue_id, venue_name, city_name, country_name, capacity
 		`
+
+		const some = await client.query(some_query, [req.params.venue_id])
 		const info = await client.query(info_query, [req.params.venue_id])
 		const win = await client.query(`
 			SELECT COUNT(*) FILTER (WHERE win_type='runs')::int AS first,
@@ -365,7 +372,9 @@ app.get('/venue/:venue_id', async (req, res) => {
 			WHERE innings_no = 1 AND venue_id = $1 AND
 			      season_year IN (2011, 2013, 2015, 2017)
 			GROUP BY season_year ORDER BY season_year`, [req.params.venue_id])
-		res.json({'info': info.rows[0], 'win': win.rows[0], 'avg': avg.rows})
+			console.log(info.rows)
+			console.log(info.rows[0])
+		res.json({'info': info.rows[0]? info.rows[0]: some.rows[0], 'win': win.rows[0], 'avg': avg.rows})
 	}
 	catch (e) { console.log(e); res.json({ "error": "ERR in /venue/:venue_id" }) }
 })

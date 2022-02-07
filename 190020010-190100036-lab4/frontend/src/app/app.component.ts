@@ -3,9 +3,29 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-root',
   template: `
-    <div style="padding-bottom: 1em">
-      [app.component] we may put links to different components in a header here
-    </div>
+  <style>
+  .green-txt{
+    color: chartreuse;
+  }  
+  </style>
+    <mat-toolbar color="primary" >
+      <span>
+        <button mat-button routerLink="matches" >
+            Matches
+        </button>
+      </span>
+      <span>
+        <button mat-button routerLink="venues" >
+            Venues
+        </button>
+      </span>
+      <span>
+        <button mat-button routerLink="venues/add" >
+            Add Venue
+        </button>
+      </span>
+    </mat-toolbar>
+
     <router-outlet></router-outlet>
   `,
   styles: []

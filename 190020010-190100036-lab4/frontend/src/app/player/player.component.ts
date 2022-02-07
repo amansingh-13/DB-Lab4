@@ -100,7 +100,7 @@ export class PlayerComponent implements OnInit, AfterViewInit {
         },
         {
           type: 'bar',
-          label: "Runs concealed",
+          label: "Runs conceded",
           data: this.data1,
           fill: false,
           backgroundColor: '#71B37C',
@@ -123,6 +123,16 @@ export class PlayerComponent implements OnInit, AfterViewInit {
       data: {
         labels: this.labels,
         datasets: this.bowlChartData.datasets
+      },
+      options: {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Match ID'
+            },
+          }
+        }
       }
     })
 
@@ -141,6 +151,20 @@ export class PlayerComponent implements OnInit, AfterViewInit {
         plugins: {
           legend: {
             display: false
+          }
+        },
+        scales: {
+          y: {
+            title: {
+              display: true,
+              text: 'Runs'
+            },
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Match ID'
+            },
           }
         }
       }

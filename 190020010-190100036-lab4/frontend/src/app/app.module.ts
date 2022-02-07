@@ -16,6 +16,7 @@ import { VenueComponent } from './venue/venue.component';
 import { PlayerComponent } from './player/player.component'; 
 import { NgApexchartsModule } from "ng-apexcharts";
 import { NewvenueComponent } from './newvenue/newvenue.component';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { NewvenueComponent } from './newvenue/newvenue.component';
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
-    NgApexchartsModule
+    NgApexchartsModule,
+    MatToolbarModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
